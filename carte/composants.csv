@@ -1,0 +1,50 @@
+repere,designation,empreinte,lcsc,famille,pose,note
+C1,22uF 25V X5R 0805,C_0805_2012Metric,C45783,base,cms,
+C2,22uF 25V X5R 0805,C_0805_2012Metric,C45783,base,cms,
+C3,10uF 25V X5R 0805,C_0805_2012Metric,C15850,base,cms,
+C4,22uF 25V X5R 0805,C_0805_2012Metric,C45783,base,cms,
+C5,100nF 50V X7R 0603,C_0603_1608Metric,C14663,base,cms,
+C6,10uF 25V X5R 0805,C_0805_2012Metric,C15850,base,cms,
+C7,10uF 25V X5R 0805,C_0805_2012Metric,C15850,base,cms,
+C8,10uF 25V X5R 0805,C_0805_2012Metric,C15850,base,cms,
+C9,100nF 50V X7R 0603,C_0603_1608Metric,C14663,base,cms,
+C10,10uF 25V X5R 0805,C_0805_2012Metric,C15850,base,cms,
+C11,470uF 10V 6.3x7.7,CP_Elec_6.3x7.7,C82004,etendue,cms,"470 uF 10 V, collee a l'ampli. Remplace C9900074433, en rupture le 23/09"
+C12,100nF 50V X7R 0603,C_0603_1608Metric,C14663,base,cms,
+C13,1uF 50V X5R 0603,C_0603_1608Metric,C15849,base,cms,retient EN du module au demarrage
+D1,SS34 40V 3A,D_SMA,C8678,base,cms,"schottky de l'elevateur. ATTENTION : rotation a corriger de 180 degres, a confirmer sur leur vue"
+J1,USB-C 24 contacts,USB_C_Receptacle_Amphenol_12401610E4-2A,C5119948,etendue,traversant,"24 contacts plus blindage, empreinte Amphenol 12401610E4-2A"
+J2,JST PH 4 broches coude,JST_PH_S4B-PH-K_1x04_P2.00mm_Horizontal,C157926,etendue,traversant,"vers le lecteur NFC. Remplace C20507123, en rupture le 23/09"
+J3,JST PH 2 broches coude,JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal,C173752,etendue,traversant,haut-parleur
+J4,JST PH 3 broches coude,JST_PH_S3B-PH-K_1x03_P2.00mm_Horizontal,C157929,etendue,traversant,potentiometre
+J5,JST PH 2 broches coude,JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal,C173752,etendue,traversant,bouton
+J6,JST PH 2 broches coude,JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal,C173752,etendue,traversant,batterie
+J7,microSD Hirose DM3AT-SF-PEJM5,microSD_HC_Hirose_DM3AT-SF-PEJM5,C114218,etendue,cms,
+J8,JST PH 2 broches coude,JST_PH_S2B-PH-K_1x02_P2.00mm_Horizontal,C173752,etendue,traversant,interrupteur du potentiometre
+L1,4.7uH 2A SLW4030S4R7MST,L_Taiyo-Yuden_MD-4040,C206284,etendue,cms,"2 A de saturation, 2.9 A efficaces, 60 mOhm. Empreinte confrontee au plan de pose de la fiche le 23/09 : compatible"
+L2,4.7uH 2A SLW4030S4R7MST,L_Taiyo-Yuden_MD-4040,C206284,etendue,cms,"meme piece que L1, 1.5 A suffiraient ici"
+Q1,2N7002,SOT-23,C8545,base,cms,"verrou d'extinction. ATTENTION : rotation a corriger de 180 degres, comme D1"
+R1,75k,R_0603_1608Metric,C23242,base,cms,"fixe le 5 V avec R2 : 0.6 x (1 + 75/10) = 5.10 V, 1 % exige"
+R2,10k,R_0603_1608Metric,C25804,base,cms,"fixe le 5 V avec R1, 1 % exige"
+R3,100k,R_0603_1608Metric,C25803,base,cms,
+R4,0R,R_0603_1608Metric,C21189,base,cms,"l'AP63203 sort 3.3 V tout seul, simple fil vers FB"
+R5,non montee,R_0603_1608Metric,,,non monte,"ancien pont diviseur, supprime"
+R6,100k,R_0603_1608Metric,C25803,base,cms,
+R7,1k,R_0603_1608Metric,C21190,base,cms,"courant de charge 890 mA, 1 % exige"
+R8,1.5k,R_0603_1608Metric,C22843,base,cms,"courant tire de l'USB 1.03 A, 1 % exige"
+R9,10k,R_0603_1608Metric,C25804,base,cms,desactive la sonde de temperature
+R10,100k,R_0603_1608Metric,C25803,base,cms,
+R11,100k,R_0603_1608Metric,C25803,base,cms,
+R12,1M,R_0603_1608Metric,C22935,base,cms,"rappel de SYSOFF vers VBAT, le seul rail present quand la boite est eteinte"
+R13,non montee,R_0603_1608Metric,,,non monte,"broche GAIN en l'air, 9 dB comme le prototype"
+R14,5.1k,R_0603_1608Metric,C23186,base,cms,declare la carte comme consommatrice sur USB-C
+R15,5.1k,R_0603_1608Metric,C23186,base,cms,declare la carte comme consommatrice sur USB-C
+R16,10k,R_0603_1608Metric,C25804,base,cms,
+R17,10k,R_0603_1608Metric,C25804,base,cms,
+R18,10k,R_0603_1608Metric,C25804,base,cms,tire EN du module vers le 3.3 V
+R19,100k,R_0603_1608Metric,C25803,base,cms,"rappel de grille de Q1 : sans lui, lacher IO21 laisse la grille en l'air"
+U1,ESP32-S3-WROOM-1-N8R2,ESP32-S3-WROOM-1,C2913204,etendue,cms,seule reference verifiee au catalogue
+U2,BQ24075RGTR,VQFN-16-1EP_3x3mm_P0.5mm_EP1.1x1.1mm,C15464,etendue,cms,chargeur a chemin d'alimentation
+U3,AP63203WU-7,TSOT-23-6,C780769,etendue,cms,"abaisseur 3.3 V a sortie fixe, surtout pas l'AP63201"
+U4,MT3608,SOT-23-6,C84817,etendue,cms,elevateur 5 V
+U5,MAX98357AETE+T,TQFN-16-1EP_3x3mm_P0.5mm_EP1.23x1.23mm,C910544,etendue,cms,ampli I2S
