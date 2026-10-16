@@ -144,6 +144,20 @@ diode `D1` à corriger de 180 degrés dans leur prévisualisation. Lisez-le.
 
 ## Le micrologiciel
 
+**Il est écrit pour ce montage-là.** Le brochage est dans le code, pas dans un
+fichier de configuration : les deux environnements correspondent à ma carte
+imprimée et à mon prototype sur modules, et à rien d'autre. Si vous câblez
+autrement, un fil déplacé veut dire une constante à changer en haut de
+`src/main.cpp`, et tant que ce n'est pas fait, ça ne marchera pas, parfois
+sans rien dire. Commencez par reproduire le brochage donné plus haut, et ne le
+déplacez qu'ensuite.
+
+Et c'est un projet du dimanche, pas un produit. Il tourne tous les jours chez
+moi, ce qui est un échantillon d'une boîte. Il reste des angles rugueux, des
+cas que personne n'a rencontrés et des choses que j'aurais faites autrement en
+le réécrivant. Lisez-le comme un point de départ qui marche, pas comme une
+référence.
+
 [PlatformIO](https://platformio.org/) fait tout le travail.
 
 ```sh

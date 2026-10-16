@@ -1,5 +1,17 @@
 # Le micrologiciel
 
+**Ecrit pour ce montage-la.** Le brochage vit dans le code, en haut de
+`src/main.cpp`, et les deux environnements decrivent ma carte imprimee et mon
+prototype sur modules. Un montage cable autrement demande d'y changer les
+constantes correspondantes : sans ca, il ne marchera pas, et pas toujours
+bruyamment. Le lecteur NFC muet et la carte SD introuvable sont les deux
+symptomes les plus frequents d'une broche qui n'est pas la ou le code la
+croit.
+
+C'est aussi un projet du dimanche, pas un produit. Il tourne tous les jours
+chez moi, ce qui fait un echantillon d'une boite. Prenez-le comme un point de
+depart qui marche.
+
 Deux environnements, un seul code.
 
 ```sh
