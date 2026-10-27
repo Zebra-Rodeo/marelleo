@@ -1,22 +1,25 @@
-# Le boitier
+# The enclosure
 
-Trois pieces, PLA, imprimees sur une Bambu Lab A1.
+**English** · [Français](README.fr.md)
 
-| Fichier | Taille | Reglages |
+Three parts, PLA, printed on a Bambu Lab A1.
+
+| File | Size | Settings |
 |---|---|---|
-| `marelleo-corps.stl` | 120 x 120 x 80 mm | face ouverte vers le haut, aucun support |
-| `marelleo-base.stl` | 120 x 120 x 29 mm | a plat |
-| `marelleo-molette.stl` | 24 x 24 x 12 mm | a plat, 100 % de remplissage |
+| `marelleo-corps.stl` | 120 × 120 × 80 mm | open face up, no supports |
+| `marelleo-base.stl` | 120 × 120 × 29 mm | flat |
+| `marelleo-molette.stl` | 24 × 24 × 12 mm | flat, 100 % infill |
 
-Buse 0,4 mm, couches de 0,2 mm, trois parois, 15 % de remplissage.
+0.4 mm nozzle, 0.2 mm layers, three walls, 15 % infill.
 
-Le cercle grave sur le dessus dit ou poser la figurine, parce que l'antenne du
-lecteur NFC est juste dessous. Sa portee traverse sans difficulte 3 mm de PLA.
+The circle engraved on the top says where to put the figurine, because the NFC
+reader's antenna is right underneath. Its range goes through 3 mm of PLA
+without difficulty.
 
-**Inserts en laiton M3**, pas de vis autoforeuses. Visser dans du plastique
-imprime tient une fois ou deux, puis la matiere se fend le long des couches.
-L'insert se pose sur le trou, on vient dessus avec la panne du fer a souder, le
-laiton chauffe, fond le plastique autour de lui et s'y noie. En refroidissant,
-on a un pas de vis metal pris dans la piece.
+**M3 brass inserts**, not self-tapping screws. Screwing into printed plastic
+holds once or twice, then the material splits along the layers. The insert
+goes on the hole, you come down on it with the tip of the soldering iron, the
+brass heats up, melts the plastic around itself and sinks in. As it cools you
+have a metal thread captured in the part.
 
-Le modele a ete dessine sur Fusion 360 en licence loisir, qui est gratuite.
+The model was drawn in Fusion 360 on the free hobbyist licence.

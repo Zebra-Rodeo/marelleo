@@ -1,24 +1,26 @@
-# La carte
+# The board
 
-Quatre couches, 1,6 mm, 60 x 70 mm. Les fichiers sont prets a commander.
+**English** · [Français](README.fr.md)
 
-| Fichier | Role |
+Four layers, 1.6 mm, 60 × 70 mm. The files are ready to order.
+
+| File | Role |
 |---|---|
-| `marelleo-gerbers.zip` | a deposer tel quel chez le fabricant |
-| `fab/marelleo-bom.csv` | la nomenclature, au format JLCPCB |
-| `fab/marelleo-cpl.csv` | les positions, au format JLCPCB |
-| `composants.csv` | la meme liste, lisible, avec les references LCSC |
-| `marelleo.kicad_pcb` | la carte elle-meme, pour la modifier |
-| `generer.py` | le script qui la dessine : la carte est generee, pas cliquee |
-| `stock.py` | verifie le stock LCSC le jour de la commande |
-| `schema.md` | **a lire avant de commander** |
+| `marelleo-gerbers.zip` | upload as is to the manufacturer |
+| `fab/marelleo-bom.csv` | the bill of materials, JLCPCB format |
+| `fab/marelleo-cpl.csv` | the component positions, JLCPCB format |
+| `composants.csv` | the same list, readable, with LCSC part numbers |
+| `marelleo.kicad_pcb` | the board itself, to modify it |
+| `generer.py` | the script that draws it: the board is generated, not clicked |
+| `stock.py` | checks LCSC stock on the day you order |
+| `schema.md` | **read it before ordering** |
 
-`schema.md` porte les choix, les mesures prises au banc et les pieges qui ont
-coute des soirees : le chargeur qui suspend la charge quand on eteint la boite,
-le module NFC qui clignote au lieu de demarrer, la diode dont la rotation est a
-corriger de 180 degres dans la previsualisation de JLCPCB.
+`schema.md` carries the choices, the measurements taken at the bench and the
+traps that cost me evenings: the charger that suspends charging when you turn
+the box off, the NFC module that blinks instead of starting, the diode whose
+rotation has to be corrected by 180 degrees in JLCPCB's preview.
 
-Cinq cartes montees sont revenues a environ 160 euros, soit 32 euros la carte,
-composants poses.
+Five assembled boards came to about 160 euros, so 32 euros a board with
+components placed.
 
-![La carte, vue du dessus](apercu.png)
+![The board, seen from above](apercu.png)

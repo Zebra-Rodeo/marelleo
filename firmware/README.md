@@ -1,56 +1,61 @@
-# Le micrologiciel
+# The firmware
 
-**Ecrit pour ce montage-la.** Le brochage vit dans le code, en haut de
-`src/main.cpp`, et les deux environnements decrivent ma carte imprimee et mon
-prototype sur modules. Un montage cable autrement demande d'y changer les
-constantes correspondantes : sans ca, il ne marchera pas, et pas toujours
-bruyamment. Le lecteur NFC muet et la carte SD introuvable sont les deux
-symptomes les plus frequents d'une broche qui n'est pas la ou le code la
-croit.
+**English** · [Français](README.fr.md)
 
-C'est aussi un projet du dimanche, pas un produit. Il tourne tous les jours
-chez moi, ce qui fait un echantillon d'une boite. Prenez-le comme un point de
-depart qui marche.
+**Written for this exact build.** The pinout lives in the code, at the top of
+`src/main.cpp`, and the two environments describe my printed board and my
+module prototype. A build wired differently needs the matching constants
+changed there: without that it will not work, and not always loudly. A silent
+NFC reader and a missing SD card are the two most common symptoms of a pin
+that is not where the code thinks it is.
 
-Deux environnements, un seul code.
+It is also a weekend project, not a product. It runs every day at my house,
+which is a sample of one box. Take it as a starting point that works.
+
+Two environments, one body of code.
 
 ```sh
-pio run -e boite -t upload     # modules sur breadboard ou plaque a pastilles
-pio run -e carte -t upload     # carte imprimee
+pio run -e boite -t upload     # modules on breadboard or perfboard
+pio run -e carte -t upload     # printed board
 pio device monitor
 ```
 
 | | `boite` | `carte` |
 |---|---|---|
 | Module | ESP32-S3-DevKitC-1 N16R8 | ESP32-S3-WROOM-1-N8R2 |
-| Flash | 16 Mo | 8 Mo |
-| PSRAM | 8 Mo octale | 2 Mo quad |
-| Console serie | puce CH343, survit aux resets | USB natif du processeur |
+| Flash | 16 MB | 8 MB |
+| PSRAM | 8 MB octal | 2 MB quad |
+| Serial console | CH343 chip, survives resets | the processor's native USB |
 
-Se tromper d'environnement donne une carte qui ne demarre pas du tout, sans
-une ligne sur la console. Les deux pieges sont expliques dans
-`platformio.ini`, au-dessus des reglages concernes.
+Picking the wrong environment gives you a board that does not start at all,
+without a line on the console. Both traps are explained in `platformio.ini`,
+above the settings concerned.
 
-## Ou se trouve quoi
+## Where things are
 
-| Fichier | Role |
+| File | Role |
 |---|---|
-| `main.cpp` | la boucle, la lecture, le volume, l'extinction |
-| `library.cpp` | la table figurine vers pistes, resistante aux coupures |
-| `serveur.cpp` | l'API et la page web |
-| `page.h` | toute l'interface, dans un seul litteral |
-| `reseau.cpp` | le WiFi, et le portail quand aucun reseau n'est connu |
-| `maj.cpp` | la mise a jour par le reseau, avec retour arriere |
-| `pn532_hsu.cpp` | le lecteur NFC en liaison serie |
-| `batterie.cpp` | la tension, traduite en une jauge qui ne remonte pas |
-| `carillon.cpp` | les deux notes, fabriquees echantillon par echantillon |
+| `main.cpp` | the loop, playback, volume, power off |
+| `library.cpp` | the figurine to tracks table, resistant to power cuts |
+| `serveur.cpp` | the API and the web page |
+| `page.h` | the whole interface, in a single literal |
+| `reseau.cpp` | WiFi, and the portal when no network is known |
+| `maj.cpp` | updating over the network, with rollback |
+| `pn532_hsu.cpp` | the NFC reader over serial |
+| `batterie.cpp` | the voltage, turned into a gauge that never goes back up |
+| `carillon.cpp` | the two notes, generated sample by sample |
 
-La page web est compilee dans le micrologiciel : aucune ressource exterieure,
-puisque la boite doit savoir repondre sans acces a internet.
+The source is commented in French, which is the language I think in while
+writing it. The identifiers follow: `biblio` is the library, `figurine` is a
+figurine, `piste` a track, `molette` the volume knob, `veille` sleep, `maj` an
+update.
 
-## Travailler l'interface sans la boite
+The web page is compiled into the firmware: no external resources, since the
+box has to answer without internet access.
 
-Le depot prive porte une boite fictive en Python qui sert la page extraite de
-`page.h` et repond a son API. Elle n'est pas publiee ici : elle depend de
-fichiers d'essai qui n'ont d'interet que pour moi. La page se teste aussi bien
-sur une vraie boite, qui repond en une seconde.
+## Working on the interface without the box
+
+The private repository carries a fake box in Python that serves the page
+extracted from `page.h` and answers its API. It is not published here: it
+depends on fixture files that are only of interest to me. The page tests just
+as well against a real box, which answers in a second.

@@ -1,417 +1,412 @@
-# La carte, pour une série
+# The board, for a production run
 
-Cible : 50 exemplaires chez JLCPCB, carte 70 × 60 mm, 4 couches, composants sur
-une seule face pour ne payer qu'une préparation et un pochoir.
+**English** · [Français](schema.fr.md)
 
-**Le brochage est identique à celui du prototype.** Le micrologiciel actuel
-tourne sans une ligne de changement, ce qui enlève une inconnue à un moment où
-il y en a déjà assez.
+Target: 50 units from JLCPCB, 70 × 60 mm board, 4 layers, components on a
+single side so that only one setup and one stencil get paid for.
 
-## Les rails
+**The pinout is identical to the prototype's.** The current firmware runs
+without a single line changed, which removes one unknown at a moment when
+there are already enough of them.
 
-| Rail | D'où il vient | Ce qu'il alimente |
+## The rails
+
+| Rail | Where it comes from | What it feeds |
 |---|---|---|
-| `VBUS` 5 V | prise USB-C | le chargeur, uniquement |
-| `VSYS` 3,0 à 4,2 V | chargeur à chemin d'alimentation | l'abaisseur et l'élévateur |
-| `+5V` | élévateur depuis `VSYS` | l'amplificateur, et l'abaisseur ci-dessous |
-| `+3V3` | abaisseur **depuis le 5 V** | module, carte SD, lecteur NFC |
+| `VBUS` 5 V | USB-C socket | the charger, and nothing else |
+| `VSYS` 3.0 to 4.2 V | power path charger | the buck and the boost converter |
+| `+5V` | boost from `VSYS` | the amplifier, and the buck below |
+| `+3V3` | buck **from the 5 V** | module, SD card, NFC reader |
 
-Le chemin d'alimentation compte : il permet de jouer pendant la charge sans
-perturber la détection de fin de charge, ce que le montage actuel ne sait pas
-faire proprement.
+The power path matters: it allows playback while charging without upsetting
+end-of-charge detection, which the current build cannot do cleanly.
 
-**Le 3,3 V se fabrique à partir du 5 V, et non de la batterie.** Une batterie
-vide descend à 3,0 V, sous les 3,3 V voulus, et un abaisseur ne sait pas
-remonter une tension : la boîte s'éteindrait avec de l'énergie encore dedans.
-Partir du 5 V garantit une entrée toujours plus haute que la sortie. L'élévateur
-tourne donc tant que la boîte est allumée, ce qui est sans importance ici.
+**The 3.3 V is made from the 5 V, not from the battery.** An empty battery
+drops to 3.0 V, below the 3.3 V wanted, and a buck converter cannot raise a
+voltage: the box would shut down with energy still in it. Starting from the
+5 V guarantees an input always higher than the output. The boost converter
+therefore runs the whole time the box is on, which is of no consequence here.
 
-## L'extinction, repensée
+## Power off, rethought
 
-Aujourd'hui l'interrupteur coupe au milieu d'une écriture, d'où la sauvegarde
-résistante aux coupures dans `library.cpp`. Sur la carte, un **verrou** :
+Today the switch cuts in the middle of a write, hence the power-cut resistant
+save in `library.cpp`. On the board, a **latch**:
 
-1. l'interrupteur du potentiomètre met la broche `SYSOFF` du chargeur à la
-   masse, ce qui ouvre son rail de sortie et démarre la boîte ;
-2. le processeur démarre et maintient lui-même cette broche basse, non pas en
-   la touchant, mais **par la grille de Q1** commandée par `IO21` ;
-3. à l'extinction, il termine ses écritures, démonte la carte SD, puis lâche la
-   grille. R12, 1 MΩ vers VBAT, relève alors `SYSOFF` et la boîte s'éteint.
+1. the potentiometer's switch pulls the charger's `SYSOFF` pin to ground,
+   which opens its output rail and starts the box;
+2. the processor boots and holds that pin low itself, not by touching it, but
+   **through Q1's gate** driven by `IO21`;
+3. at shutdown it finishes its writes, unmounts the SD card, then releases the
+   gate. R12, 1 MΩ to VBAT, pulls `SYSOFF` back up and the box turns off.
 
-C'est une fonction prévue par le chargeur, pas un montage de fortune.
+This is a function the charger provides, not a makeshift circuit.
 
-**Le transistor n'est pas un ornement.** `SYSOFF` vit sur la tension batterie,
-4,2 V, au-delà des 3,6 V que l'ESP32 accepte sur une broche. Et une broche non
-alimentée ramène par ses diodes de protection le nœud à une diode de la masse,
-c'est-à-dire à un niveau bas, c'est-à-dire à une boîte qui se rallume seule.
-Q1 isole les deux mondes : le processeur ne voit que du 3,3 V, et lâcher la
-grille éteint pour de bon.
+**The transistor is not decoration.** `SYSOFF` lives on battery voltage, 4.2 V,
+beyond the 3.6 V the ESP32 accepts on a pin. And an unpowered pin drags the
+node to within a diode of ground through its protection diodes, that is to say
+to a low level, that is to say a box that turns itself back on. Q1 isolates the
+two worlds: the processor only ever sees 3.3 V, and releasing the gate turns
+the box off for good.
 
-Plus aucun fichier tronqué possible, et le bouton devient une demande plutôt
-qu'un ordre.
+No more truncated files, and the button becomes a request rather than an order.
 
-**Rien de tout cela n'est encore écrit dans le micrologiciel.** Il n'utilise à
-ce jour ni `IO21` ni `IO2`. Le matériel porte le verrou, le logiciel ne s'en
-sert pas : la boîte s'allume et reste allumée tant que l'interrupteur est
-fermé. À écrire, et cela se livrera par le réseau.
+**None of this is written in the firmware yet.** As of today it uses neither
+`IO21` nor `IO2`. The hardware carries the latch, the software does not use it:
+the box turns on and stays on as long as the switch is closed. To be written,
+and it will ship over the network.
 
-## Le module, broche par broche
+## The module, pin by pin
 
-| Broche | Va vers | Pourquoi |
+| Pin | Goes to | Why |
 |---|---|---|
-| `IO4` | ampli `SD_MODE` | coupe l'ampli au repos |
-| `IO5` `IO6` `IO7` | ampli `DIN` `BCLK` `LRC` | liaison audio I2S, ordre permuté |
-| `IO8` `IO9` | connecteur NFC, 4 points | liaison série vers le PN532 déporté |
-| `IO10` | curseur du potentiomètre | ADC1 obligatoire, l'ADC2 est muet en WiFi |
-| `IO11` `IO12` `IO13` `IO14` | carte SD `CS` `MOSI` `CLK` `MISO` | SPI, sans tampon, `CLK` et `MOSI` permutés |
+| `IO4` | amplifier `SD_MODE` | mutes the amplifier at idle |
+| `IO5` `IO6` `IO7` | amplifier `DIN` `BCLK` `LRC` | I2S audio link, order permuted |
+| `IO8` `IO9` | NFC connector, 4 ways | serial link to the remote PN532 |
+| `IO10` | potentiometer wiper | ADC1 mandatory, ADC2 is mute under WiFi |
+| `IO11` `IO12` `IO13` `IO14` | SD card `CS` `MOSI` `CLK` `MISO` | SPI, unbuffered, `CLK` and `MOSI` permuted |
 
-**Cinq signaux ne sont pas au même endroit que sur le prototype.** Leur ordre a
-été choisi en essayant toutes les orientations de l'amplificateur et toutes les
-permutations de broches, puis en comptant les croisements de pistes sur la
-géométrie réelle : on passe de quatre croisements à zéro, sans allonger le
-cuivre. Le micrologiciel porte les deux brochages, celui du prototype par
-défaut, celui de la carte sous `-DCARTE_IMPRIMEE`, soit l'environnement `carte`
-de `platformio.ini`.
-| `IO18` | bouton | rappel interne, pas de résistance |
-| `IO48` | LED d'état | déjà câblé ainsi |
-| `IO1` | pont diviseur sur `VSYS` | niveau de batterie, ce qui manque aujourd'hui |
-| `IO21` | `SYSOFF` du chargeur | le verrou d'extinction |
-| `EN` | `R18` 10 kΩ vers le 3,3 V et `C13` 1 µF vers la masse | la remise à zéro du module |
-| `IO0`, `RXD0`, `TXD0` | pastilles de test `TP1` à `TP3` | programmation en usine et console |
-| `IO19` `IO20` | USB-C `D-` `D+` | USB natif, pour la mise à jour en usine |
-| `IO43` `IO44` | pastilles de test | console série, sans puce dédiée |
-| `IO0`, `EN` | pastilles de test | démarrage et remise à zéro |
+**Five signals are not where they were on the prototype.** Their order was
+chosen by trying every orientation of the amplifier and every pin permutation,
+then counting track crossings on the real geometry: it goes from four crossings
+to zero, without lengthening the copper. The firmware carries both pinouts, the
+prototype's by default, the board's under `-DCARTE_IMPRIMEE`, which is the
+`carte` environment in `platformio.ini`.
 
-## Les connecteurs, tous démontables
+| `IO18` | button | internal pull-up, no resistor |
+| `IO48` | status LED | already wired that way |
+| `IO1` | divider on `VSYS` | battery level, which is missing today |
+| `IO21` | charger `SYSOFF` | the shutdown latch |
+| `EN` | `R18` 10 kΩ to 3.3 V and `C13` 1 µF to ground | the module's reset |
+| `IO0`, `RXD0`, `TXD0` | test pads `TP1` to `TP3` | factory programming and console |
+| `IO19` `IO20` | USB-C `D-` `D+` | native USB, for factory flashing |
+| `IO43` `IO44` | test pads | serial console, without a dedicated chip |
+| `IO0`, `EN` | test pads | boot and reset |
 
-La carte est au fond du boîtier, le lecteur NFC sous le couvercle : tout ce qui
-n'est pas sur la carte s'enfiche.
+## The connectors, all removable
 
-| Repère | Points | Vers |
+The board sits in the bottom of the enclosure, the NFC reader under the lid:
+everything that is not on the board plugs in.
+
+| Reference | Ways | To |
 |---|---|---|
-| `J2` | 4 | module PN532 : `3V3`, masse, `RX`, `TX` |
-| `J3` | 2 | haut-parleurs, 4 Ω |
-| `J4` | 3 | potentiomètre de volume |
-| `J5` | 2 | bouton |
-| `J6` | 2 | batterie, JST-PH 2,0 |
+| `J2` | 4 | PN532 module: `3V3`, ground, `RX`, `TX` |
+| `J3` | 2 | speaker, 4 Ω |
+| `J4` | 3 | volume potentiometer |
+| `J5` | 2 | button |
+| `J6` | 2 | battery, JST-PH 2.0 |
 
-## Ce que la carte SD gagne
+## What the SD card gains
 
-Plus de module, plus de tampon `74LVC125`, plus de 5 V détourné : un connecteur
-microSD en 3,3 V, des résistances de 22 Ω en série sur l'horloge et les données,
-des rappels de 10 kΩ, et vingt millimètres de piste au lieu de vingt
-centimètres de fil. C'est la cause racine de la moitié des pannes du prototype.
+No more module, no more `74LVC125` buffer, no more diverted 5 V: a microSD
+connector on 3.3 V, 22 Ω series resistors on clock and data, 10 kΩ pull-ups,
+and twenty millimetres of track instead of twenty centimetres of wire. That is
+the root cause of half the prototype's failures.
 
-## Contraintes de placement, non négociables
+## Placement constraints, non-negotiable
 
-- **Zone sans cuivre** sous l'antenne du module, au bord de la carte, sur les
-  quatre couches.
-- **Découpages et amplificateur** dans un coin, avec leurs condensateurs, loin
-  du module et de la liaison NFC.
-- **Condensateur de 470 µF collé à l'amplificateur**, la leçon mesurée au banc :
-  cinq crans de seuil de distorsion gagnés.
-- Prise USB-C **vissée à la paroi** et reliée par une nappe, pas accessible par
-  un trou, sous peine d'arracher le connecteur à la première chute.
+- **Copper keep-out** under the module's antenna, at the edge of the board, on
+  all four layers.
+- **Switching converters and amplifier** in one corner, with their capacitors,
+  far from the module and from the NFC link.
+- **470 µF capacitor right against the amplifier**, the lesson measured at the
+  bench: five steps of distortion threshold gained.
+- USB-C socket **screwed to the wall** and connected by a lead, not reachable
+  through a hole, on pain of tearing the connector off at the first drop.
 
-## Les valeurs, vérifiées une par une
+## The values, checked one by one
 
-Fiches techniques consultées le 23 septembre 2026. Les huit valeurs que j'avais
-posées de tête portaient un point d'interrogation ; en voici le sort.
+Datasheets consulted on 23 September 2026. The eight values I had put down from
+memory carried a question mark; here is what became of them.
 
-| Repère | Rôle | Valeur | Vérification |
+| Reference | Role | Value | Check |
 |---|---|---|---|
-| R1 / R2 | règlent le 5 V de l'élévateur | 75 k et 10 k | référence 0,6 V confirmée, 0,6 × (1 + 75/10) = **5,10 V** |
-| R4 / R5 | réglaient le 3,3 V | **0 Ω et rien** | l'AP63203 est à sortie fixe, voir ci-dessous |
-| R7 | courant de charge | 1 k | 890 / 1000 = **890 mA**, dans la plage 590 Ω à 5,9 k |
-| R8 | courant tiré de l'USB | 1,5 k | 1550 / 1500 = **1,03 A**, jamais plus d'un ampère au chargeur |
-| R9 | sonde de température inutilisée | 10 k à la masse | c'est la valeur que demande la fiche pour désactiver la sonde |
-| R13 | gain de l'amplificateur | **rien** | voir ci-dessous |
-| L1 / L2 | bobines des deux découpages | 4,7 µH | plage admise 2,2 à 10 µH, ondulation calculée à 28 % du courant |
+| R1 / R2 | set the boost's 5 V | 75 k and 10 k | 0.6 V reference confirmed, 0.6 × (1 + 75/10) = **5.10 V** |
+| R4 / R5 | used to set the 3.3 V | **0 Ω and nothing** | the AP63203 is fixed output, see below |
+| R7 | charge current | 1 k | 890 / 1000 = **890 mA**, within the 590 Ω to 5.9 k range |
+| R8 | current drawn from USB | 1.5 k | 1550 / 1500 = **1.03 A**, never more than an amp from the charger |
+| R9 | unused temperature sense | 10 k to ground | that is the value the datasheet asks for to disable the sense |
+| R13 | amplifier gain | **nothing** | see below |
+| L1 / L2 | inductors for both converters | 4.7 µH | allowed range 2.2 to 10 µH, ripple calculated at 28 % of the current |
 
-**L'erreur qui aurait tué les cartes.** L'AP63203 existe en deux familles : les
-AP63200 et AP63201 à tension réglable, et l'**AP63203 à sortie fixe de 3,3 V**.
-J'avais choisi le second et câblé le premier. Ma broche FB aurait vu 0,79 V au
-lieu des 3,3 V qu'elle attend, la boucle de régulation aurait conclu que la
-sortie était trop basse et poussé jusqu'à **13,7 V** sur le rail 3,3 V : module,
-carte SD et lecteur NFC détruits à la première mise sous tension, sur les
-cinquante cartes. La correction ne coûte rien à la carte : R4 devient un fil de
-0 Ω, R5 n'est pas montée, le cuivre ne bouge pas.
+**The mistake that would have killed the boards.** The AP63203 comes in two
+families: the AP63200 and AP63201 with adjustable voltage, and the **AP63203
+with a fixed 3.3 V output**. I had chosen the second and wired the first. My FB
+pin would have seen 0.79 V instead of the 3.3 V it expects, the regulation loop
+would have concluded the output was too low and pushed up to **13.7 V** on the
+3.3 V rail: module, SD card and NFC reader destroyed at first power-up, across
+all fifty boards. The fix costs the board nothing: R4 becomes a 0 Ω link, R5 is
+not fitted, the copper does not move.
 
-**Le gain de l'amplificateur.** La table du MAX98357A : 100 k vers la masse
-donne 15 dB, un fil vers la masse 12 dB, **broche en l'air 9 dB**, un fil vers
-le 3,3 V 6 dB. J'avais mis 100 k, c'est-à-dire le maximum. Le prototype, lui,
-joue à 9 dB depuis le début : c'est ce volume-là qui a été réglé à l'oreille et
-plafonné dans le micrologiciel. La carte garde donc 9 dB, en ne montant pas
-R13. La pastille reste en place si on veut essayer plus fort un jour, mais pour
-un objet posé près de la tête d'un enfant, monter de 6 dB ne se décide pas par
-défaut.
+**The amplifier's gain.** The MAX98357A table: 100 k to ground gives 15 dB, a
+link to ground 12 dB, **pin floating 9 dB**, a link to 3.3 V 6 dB. I had put
+100 k, that is to say the maximum. The prototype has been playing at 9 dB from
+the start: that is the volume that was set by ear and capped in the firmware.
+The board therefore keeps 9 dB, by not fitting R13. The pad stays in place in
+case anyone wants to try louder one day, but for an object sitting near a
+child's head, going up 6 dB is not something you decide by default.
 
-**Trois valeurs changées après coup, pour une raison de catalogue.** Mes
-73,2 k, 910 Ω et 1,02 k sont des valeurs de la série E96, justes au calcul mais
-absentes du stock courant du fabricant : chacune aurait été facturée comme
-pièce spéciale. Les remplaçantes sont des valeurs de stock, et le résultat ne
-souffre pas : 5,10 V au lieu de 4,99, une charge à 890 mA au lieu de 978, et une
-limite d'entrée ramenée de 1,52 A à **1,03 A**, ce qui est plutôt un gain. La
-boîte ne demandera jamais plus d'un ampère à un chargeur, ce que le moindre
-adaptateur qui traîne sait fournir, et le chargeur ralentit tout seul si
-l'entrée faiblit.
+**Three values changed afterwards, for a catalogue reason.** My 73.2 k, 910 Ω
+and 1.02 k are E96 series values, correct by calculation but absent from the
+manufacturer's regular stock: each would have been billed as a special part.
+The replacements are stock values, and the result does not suffer: 5.10 V
+instead of 4.99, charging at 890 mA instead of 978, and an input limit brought
+down from 1.52 A to **1.03 A**, which is rather a gain. The box will never ask
+more than an amp from a charger, which any adapter lying around can supply, and
+the charger slows down on its own if the input sags.
 
-**Le sens des pièces.** La table des pièces de base du fabricant donne une
-correction de rotation de 180 degrés pour **deux** de nos composants, la SS34 et
-le 2N7002 : leur zéro n'est pas celui de KiCad. C'est noté dans
-`composants.csv`, et c'est à confirmer sur leur vue de contrôle avant
-production. Une diode à l'envers sur l'élévateur, ce sont cinquante cartes qui
-ne démarrent pas.
+**Component orientation.** The manufacturer's basic parts table gives a 180
+degree rotation correction for **two** of our components, the SS34 and the
+2N7002: their zero is not KiCad's. It is noted in `composants.csv`, and it is
+to be confirmed on their review rendering before production. A reversed diode
+on the boost converter means fifty boards that do not start.
 
-**Les bobines, et leur empreinte.** L1 voit passer le courant d'entrée de
-l'élévateur, environ 0,6 A en moyenne et des pointes à 1,5 A quand le WiFi émet
-pendant un coup de basse. La pièce retenue, `C206284`, est donnée pour **2 A de
-saturation et 2,9 A efficaces**, avec 60 mΩ de résistance. La marge est là.
+**The inductors, and their footprint.** L1 carries the boost converter's input
+current, around 0.6 A on average with peaks at 1.5 A when the WiFi transmits
+during a bass note. The part chosen, `C206284`, is rated for **2 A saturation
+and 2.9 A RMS**, with 60 mΩ of resistance. The margin is there.
 
-Restait son empreinte, la dernière incertitude de la nomenclature. Sa fiche
-donne le plan de pose recommandé, à confronter au nôtre :
+That left its footprint, the last uncertainty in the bill of materials. Its
+datasheet gives the recommended land pattern, to be compared with ours:
 
-| | recommandé | notre empreinte | écart |
+| | recommended | our footprint | difference |
 |---|---|---|---|
-| longueur de pastille | 3,7 mm | 3,7 mm | aucun |
-| largeur de pastille | 1,1 mm | 1,2 mm | +0,1 |
-| écart entre pastilles | 1,9 mm | 1,6 mm | −0,3 |
-| bord extérieur depuis le centre | 2,05 mm | 2,00 mm | −0,05 |
+| pad length | 3.7 mm | 3.7 mm | none |
+| pad width | 1.1 mm | 1.2 mm | +0.1 |
+| gap between pads | 1.9 mm | 1.6 mm | −0.3 |
+| outer edge from centre | 2.05 mm | 2.00 mm | −0.05 |
 
-L'électrode de la pièce fait 0,95 mm de large et va du rayon 1,05 mm au bord du
-corps, à 2,00 mm. Notre pastille couvre de 0,80 à 2,00 mm : **l'électrode repose
-entièrement sur le cuivre**. Les 0,25 mm de pastille qui dépassent vers
-l'intérieur passent sous la résine isolante du composant, sans conséquence, et
-1,6 mm d'écart interdit tout pont de soudure. Sur le bord extérieur, celui qui
-fait la soudure, l'écart au plan recommandé est de 0,05 mm.
+The part's electrode is 0.95 mm wide and runs from radius 1.05 mm to the edge
+of the body, at 2.00 mm. Our pad covers 0.80 to 2.00 mm: **the electrode sits
+entirely on copper**. The 0.25 mm of pad sticking out inwards passes under the
+component's insulating resin, with no consequence, and a 1.6 mm gap rules out
+any solder bridge. On the outer edge, the one that makes the joint, the
+difference from the recommended pattern is 0.05 mm.
 
-**L'empreinte convient, elle ne sera pas modifiée.**
+**The footprint is fine, it will not be changed.**
 
-## La relecture de septembre, et ce qu'elle a corrigé
+## The September review, and what it corrected
 
-Trois défauts ont été trouvés à la relecture, dont deux empêchaient purement et
-simplement la carte de fonctionner. Tous vérifiés contre le fichier et contre
-les fiches techniques avant correction.
+Three faults were found at review, two of which simply stopped the board
+working. All verified against the file and against the datasheets before
+correction.
 
-**La diode de l'élévateur était à l'envers.** Chez KiCad, la pastille 1 d'une
-diode est la **cathode**, et le symbole dessiné sur la couche fabrication le
-montre : la barre est du côté de la pastille 1, le triangle du côté de la
-pastille 2. Le fichier portait `D1: (SW_5V, +5V)`, donc cathode sur le nœud de
-commutation. Une diode dans ce sens ne laisse jamais monter la sortie : pas de
-5 V, donc pas de 3,3 V puisqu'il en descend, donc rien ne démarre, et le MT3608
-prend la surtension de son propre nœud. D1 a été tournée de 180 degrés, ce qui
-échange la position des deux pastilles sans déplacer un seul millimètre de
-cuivre, les pastilles étant symétriques à ±2 mm.
+**The boost converter's diode was the wrong way round.** In KiCad, pad 1 of a
+diode is the **cathode**, and the symbol drawn on the fabrication layer shows
+it: the bar is on the pad 1 side, the triangle on the pad 2 side. The file had
+`D1: (SW_5V, +5V)`, so cathode on the switching node. A diode that way round
+never lets the output rise: no 5 V, therefore no 3.3 V since it comes down from
+it, therefore nothing starts, and the MT3608 takes the overvoltage from its own
+node. D1 was rotated 180 degrees, which swaps the position of the two pads
+without moving a single millimetre of copper, the pads being symmetrical to
+within ±2 mm.
 
-**La boîte ne pouvait pas s'éteindre.** La fiche TI, table 7-1 : « SYSOFF is
-internally pulled up to V_BAT through a large resistor (approximately 5 MΩ) ».
-Le rappel interne va donc vers le **haut**. Notre R12 de 100 k était branchée
-sur VSYS, c'est-à-dire sur le rail que SYSOFF coupe : dès l'extinction, VSYS
-tombe à zéro et R12 tire SYSOFF vers la masse contre 5 MΩ, soit 0,08 V, soit un
-niveau bas franc, soit la boîte rallumée. Et IO21, posée directement sur ce
-nœud, y voyait 4,2 V là où l'ESP32 en admet 3,6.
+**The box could not turn off.** TI's datasheet, table 7-1: "SYSOFF is
+internally pulled up to V_BAT through a large resistor (approximately 5 MΩ)".
+The internal pull therefore goes **up**. Our 100 k R12 was connected to VSYS,
+that is to say to the rail SYSOFF cuts: as soon as it shuts down, VSYS falls to
+zero and R12 pulls SYSOFF to ground against 5 MΩ, meaning 0.08 V, meaning a
+clean low level, meaning the box back on. And IO21, sitting directly on that
+node, saw 4.2 V there where the ESP32 accepts 3.6.
 
-La correction tient en deux pièces :
+The fix comes down to two parts:
 
-- **R12 passe à 1 MΩ vers VBAT**, le seul rail présent quand la boîte est
-  éteinte. 4 µA de fuite, et un rappel franc.
-- **Q1, un 2N7002**, s'intercale : grille sur `ARRET_CMD` que commande IO21,
-  drain sur SYSOFF, source à la masse, avec R19 de 100 k en rappel de grille.
-  Le processeur ne voit plus jamais la tension batterie, et lâcher la grille
-  éteint la boîte.
+- **R12 becomes 1 MΩ to VBAT**, the only rail present when the box is off. 4 µA
+  of leakage, and a clean pull-up.
+- **Q1, a 2N7002**, goes in between: gate on `ARRET_CMD` driven by IO21, drain
+  on SYSOFF, source to ground, with R19 of 100 k as gate pull-down. The
+  processor never sees battery voltage again, and releasing the gate turns the
+  box off.
 
-**La charge était limitée à 500 mA.** Table 7-2 de la même fiche : `EN2=0,
-EN1=1` est le mode **USB500**, et la résistance ILIM n'est lue que pour
-`EN2=1, EN1=0`. R8, choisie pour 1,03 A, ne servait à rien. Les deux broches ont
-été échangées.
+**Charging was limited to 500 mA.** Table 7-2 of the same datasheet: `EN2=0,
+EN1=1` is **USB500** mode, and the ILIM resistor is only read for `EN2=1,
+EN1=0`. R8, chosen for 1.03 A, was doing nothing. The two pins were swapped.
 
-**Un quatrième défaut, dans l'outillage.** Le projet portait `min_clearance` à
-**zéro** : le contrôle des règles ne vérifiait aucun isolement. La classe de
-réseau imposait 0,2 mm et c'est elle qui a fait le travail, vérifié en refaisant
-le contrôle à 0,2 puis 0,25. La règle est maintenant à 0,15 mm.
+**A fourth fault, in the tooling.** The project had `min_clearance` at **zero**:
+the design rule check verified no clearance at all. The net class imposed
+0.2 mm and that is what did the work, verified by rerunning the check at 0.2
+then 0.25. The rule is now at 0.15 mm.
 
-**Ce qui reste, et qui n'est pas corrigé ici :** VSYS court sur 71 mm en 0,2 mm
-sans aucun plan pour l'aider, alors qu'il porte le courant d'entrée de
-l'élévateur. Le calcul IPC-2221 donne +50 °C et 0,26 V de chute à 1,5 A. À
-élargir à 0,8 mm au routage, comme `SW_5V` et `SW_3V3` qui sont des nœuds de
-commutation.
+**What remains, and is not fixed here:** VSYS runs 71 mm at 0.2 mm with no
+plane to help it, while carrying the boost converter's input current. The
+IPC-2221 calculation gives +50 °C and 0.26 V of drop at 1.5 A. To be widened to
+0.8 mm when routing, like `SW_5V` and `SW_3V3` which are switching nodes.
 
-## Nomenclature
+## Bill of materials
 
-**Les références vivent dans `composants.csv`**, une ligne par repère, avec pour
-chacune sa famille chez le fabricant. Douze pièces de base, douze spéciales.
-`pcb/stock.py` interroge leur catalogue et dit, pour chaque référence, le stock
-restant et le prix à la quantité qui nous intéresse.
+**The part numbers live in `composants.csv`**, one line per reference, each
+with its family at the manufacturer. Twelve basic parts, twelve extended.
+`pcb/stock.py` queries their catalogue and reports, for each part number, the
+remaining stock and the price at the quantity we care about.
 
-Prix relevés le 23 septembre 2026, pour 50 cartes :
+Prices recorded on 23 September 2026, for 50 boards:
 
-| Poste | Par carte |
+| Item | Per board |
 |---|---|
-| les cinq puces | 6,42 $ |
-| les huit connecteurs | 2,70 $ |
-| tout le reste, passifs et bobines | 1,35 $ |
-| **total des composants** | **10,48 $** |
+| the five chips | $6.42 |
+| the eight connectors | $2.70 |
+| everything else, passives and inductors | $1.35 |
+| **component total** | **$10.48** |
 
-Deux surprises dans ces chiffres. Le module coûte **3,65 $** à lui seul, plus du
-tiers du total. Et les deux connecteurs J1 et J7, la prise USB-C et le porte-carte
-microSD, coûtent ensemble **2,44 $**, plus cher que les quatre autres puces
-réunies. Si un jour il faut gagner deux dollars par carte, c'est là qu'ils sont,
-pas dans les résistances.
+Two surprises in those figures. The module costs **$3.65** on its own, more
+than a third of the total. And the two connectors J1 and J7, the USB-C socket
+and the microSD holder, cost **$2.44** together, more than the other four chips
+combined. If two dollars a board ever need to be saved, that is where they are,
+not in the resistors.
 
-Ce montant ne couvre que **ce qui est posé sur la carte**. La batterie, le
-haut-parleur, le potentiomètre, le bouton, le lecteur NFC, la carte SD, les
-figurines et leurs pastilles s'ajoutent, comme le boîtier imprimé.
+That amount only covers **what is placed on the board**. The battery, the
+speaker, the potentiometer, the button, the NFC reader, the SD card, the
+figurines and their tags come on top, as does the printed enclosure.
 
-Les cinq puces ont été retenues parce que **KiCad possède leur symbole** : leur
-brochage se lit dans la bibliothèque au lieu d'être recopié, et aucun numéro de
-broche n'est écrit à la main dans `generer.py`.
+The five chips were chosen because **KiCad has their symbol**: their pinout is
+read from the library instead of being copied out, and no pin number is written
+by hand in `generer.py`.
 
-Un point à vérifier sur la fiche technique avant de produire : la pastille
-thermique sous le BQ24075 mesure 1,1 × 1,1 mm dans l'empreinte de KiCad, à
-confronter à la cote donnée par le fabricant.
+One point to check on the datasheet before producing: the thermal pad under the
+BQ24075 measures 1.1 × 1.1 mm in KiCad's footprint, to be compared with the
+dimension the manufacturer gives.
 
-## Deux ruptures, et ce qu'elles apprennent
+## Two stockouts, and what they teach
 
-Au premier contrôle de stock, deux références sur vingt-quatre étaient à zéro :
-le condensateur de 470 µF et le connecteur JST à quatre points. Remplacées par
-`C82004`, même boîtier de 6,3 × 7,7 mm mais **tenue 10 V au lieu de 6,3**, ce qui
-est la bonne marge sur un rail à 5 V, et par `C157926`, le même JST d'origine
-sous une autre fiche.
+At the first stock check, two references out of twenty-four were at zero: the
+470 µF capacitor and the four-way JST connector. Replaced by `C82004`, same
+6.3 × 7.7 mm package but **rated 10 V instead of 6.3**, which is the right
+margin on a 5 V rail, and by `C157926`, the same original JST under another
+listing.
 
-La leçon tient en une ligne : **une référence n'est pas un acquis**. Le stock se
-revérifie le jour de la commande, `python3 pcb/stock.py`, et pas avant. La plus
-juste aujourd'hui est justement ce condensateur, avec 2 956 pièces pour les 50
-qu'il nous faut.
+The lesson fits on one line: **a part number is not a given**. Stock gets
+rechecked on the day of the order, `python3 pcb/stock.py`, and not before. The
+tightest one today is precisely that capacitor, with 2,956 pieces for the 50
+we need.
 
-## Validée au banc, le 15 octobre 2026
+## Validated at the bench, 15 October 2026
 
-Une des cinq cartes reçues a été montée avec ses six faisceaux et **tout
-fonctionne** : les rails 3,3 V et 5 V, le chemin d'alimentation du chargeur, la
-carte SD à 29,8 Go, le lecteur PN532 en liaison série, le potentiomètre sur
-toute sa course, le bouton, le décodage AAC dans le haut-parleur, le WiFi, le
-portail captif, la mise à jour depuis `maj.marelleo.org`, le fonctionnement sur
-batterie et l'extinction au clic de butée basse.
+One of the five boards received was assembled with its six harnesses and
+**everything works**: the 3.3 V and 5 V rails, the charger's power path, the SD
+card at 29.8 GB, the PN532 reader over serial, the potentiometer across its
+whole travel, the button, AAC decoding into the speaker, WiFi, the captive
+portal, updating from `maj.marelleo.org`, running on battery and powering off
+at the click at the bottom of the knob's travel.
 
-Trois incertitudes de ce document sont donc levées par la mesure plutôt que par
-la lecture d'une fiche :
+Three uncertainties in this document are therefore settled by measurement
+rather than by reading a datasheet:
 
-- **Les deux corrections de rotation étaient bonnes.** La SS34 et le 2N7002
-  avaient un zéro différent de celui de KiCad. Si D1 avait été posée à l'envers,
-  l'élévateur ne sortirait pas de 5 V et rien ne démarrerait ; si Q1 l'avait
-  été, le verrou d'extinction ne tiendrait pas. Les deux marchent.
-- **La pastille thermique du BQ24075 suffit.** La charge à 890 mA tient sans
-  que la puce se mette en repli thermique.
-- **L'empreinte de L1 tient**, sous les pointes à 1,5 A de l'élévateur.
+- **Both rotation corrections were right.** The SS34 and the 2N7002 had a zero
+  different from KiCad's. Had D1 been placed the wrong way round, the boost
+  converter would not put out 5 V and nothing would start; had Q1 been, the
+  shutdown latch would not hold. Both work.
+- **The BQ24075's thermal pad is enough.** Charging at 890 mA holds without the
+  chip going into thermal foldback.
+- **L1's footprint holds**, under the boost converter's 1.5 A peaks.
 
-Et une absence confirmée : **les résistances de 22 Ω en série sur le bus de la
-carte SD ne sont pas nécessaires.** Elles n'ont pas été posées, et la carte
-monte et se lit sans une erreur.
+And one absence confirmed: **the 22 Ω series resistors on the SD card bus are
+not necessary.** They were not fitted, and the card mounts and reads without a
+single error.
 
-**Ce qui reste ouvert.** Le micrologiciel ne pilote jamais `IO21`, donc
-l'extinction *commandée par le logiciel* à travers Q1 existe en matériel et
-n'est pas éprouvée ; seul le clic du potentiomètre l'est. Et LittleFS n'est pas
-formaté, donc une carte livrée sans carte SD n'aurait aucun stockage.
+**What is still open.** The firmware never drives `IO21`, so shutdown
+*commanded by software* through Q1 exists in hardware and is not proven; only
+the potentiometer's click is. And LittleFS is not formatted, so a board shipped
+without an SD card would have no storage at all.
 
-## Deux pièges de mise en route, qui ne sont pas des défauts de la carte
+## Two start-up traps, which are not board faults
 
-Les deux seules pannes de la mise en route venaient du câblage, et chacune
-coûte une heure à qui ne les connaît pas.
+The only two failures at start-up came from the wiring, and each costs an hour
+to anyone who does not know them.
 
-**Le cordon du lecteur NFC se croise.** Sur le module V3, les broches partagées
-portent `SDA/TXD` et `SCL/RXD` : `SDA` est ce que le module **émet**, donc il va
-sur `NFC_RX` de la carte, et `SCL` sur `NFC_TX`. Branché droit, RX sur RX, le
-module s'allume, sa LED clignote, et il ne répond jamais.
+**The NFC reader's lead crosses over.** On the V3 module, the shared pins are
+labelled `SDA/TXD` and `SCL/RXD`: `SDA` is what the module **transmits**, so it
+goes to `NFC_RX` on the board, and `SCL` to `NFC_TX`. Wired straight, RX to RX,
+the module powers up, its LED blinks, and it never answers.
 
-**Et `nfc.begin()` ne tourne qu'une fois, dans `setup()`.** Réparer le cordon ne
-sert à rien sans un vrai redémarrage. Or **l'interrupteur du potentiomètre ne
-coupe pas la carte quand l'USB est branché** : `SYSOFF` ne commande que le
-transistor de la batterie, et l'entrée alimente VSYS de son côté. Pour
-redémarrer il faut retirer l'USB, pas tourner le bouton.
+**And `nfc.begin()` only runs once, in `setup()`.** Fixing the lead achieves
+nothing without a real restart. Except that **the potentiometer's switch does
+not cut the board while USB is plugged in**: `SYSOFF` only commands the
+battery's transistor, and the input feeds VSYS from its own side. To restart
+you have to pull the USB, not turn the knob.
 
-## Deux corrections pour la prochaine carte
+## Two corrections for the next board
 
-**Le pont de mesure est sur le mauvais rail.** `IO1` lit VSYS, c'est-à-dire la
-sortie du chargeur. Or le chemin d'alimentation relie l'entrée à la sortie dès
-qu'une source externe est présente : mesuré sur la carte, USB branché, VSYS vaut
-**5,01 V**. La tension de la cellule devient donc invisible pendant toute la
-charge, et c'est précisément le moment où l'on regarde la jauge. Le logiciel s'en
-tire en affichant « sur secteur » et le dernier niveau connu, mais c'est un
-pansement.
+**The sense divider is on the wrong rail.** `IO1` reads VSYS, that is to say
+the charger's output. But the power path connects input to output as soon as an
+external source is present: measured on the board, USB plugged in, VSYS reads
+**5.01 V**. The cell's voltage therefore becomes invisible for the whole of
+charging, and that is precisely when people look at the gauge. The software
+gets out of it by showing "on mains" and the last known level, but that is a
+plaster.
 
-La correction est d'un trait : **déplacer le pont de VSYS vers VBAT**. La cellule
-devient alors lisible en permanence. Deux précautions : des résistances de 1 MΩ
-plutôt que 100 kΩ, pour que le pont ne vide pas la batterie quand la boîte est
-éteinte, et se souvenir qu'une cellule en charge lit haut, comme sur n'importe
-quel téléphone.
+The fix is one stroke: **move the divider from VSYS to VBAT**. The cell then
+becomes readable at all times. Two precautions: 1 MΩ resistors rather than
+100 kΩ, so the divider does not drain the battery when the box is off, and
+remembering that a charging cell reads high, as on any phone.
 
-**`~CHG` n'est relié à rien.** C'est la seule broche du chargeur laissée libre.
-Routée vers une entrée du processeur, elle dirait si la charge est en cours ou
-terminée, ce qu'aucune mesure de tension ne donne. `IO15`, `IO16` et `IO17` sont
-disponibles.
+**`~CHG` is connected to nothing.** It is the only charger pin left free.
+Routed to a processor input, it would say whether charging is in progress or
+finished, which no voltage measurement gives. `IO15`, `IO16` and `IO17` are
+available.
 
-## SYSOFF suspend aussi la charge
+## SYSOFF suspends charging too
 
-Mesuré sur la carte, USB branché, aux bornes de J6 :
+Measured on the board, USB plugged in, across J6:
 
-| Position | Tension | Ce qui se passe |
+| Position | Voltage | What happens |
 |---|---|---|
-| molette haute | 3,29 V | la boîte charge, et consomme en même temps |
-| molette basse | 3,11 V | **la charge est suspendue** |
-| molette basse, verrou tenu par `IO21` | 3,47 V | elle charge sans rien consommer |
+| knob up | 3.29 V | the box charges, and draws current at the same time |
+| knob down | 3.11 V | **charging is suspended** |
+| knob down, latch held by `IO21` | 3.47 V | it charges without drawing anything |
 
-`SYSOFF` ne se contente donc pas de déconnecter la batterie du système : il
-suspend la charge. Une boîte éteinte à l'interrupteur ne se recharge pas, ce que
-personne n'attend d'un objet qu'on pose sur son chargeur avant d'aller dormir.
+`SYSOFF` therefore does not merely disconnect the battery from the system: it
+suspends charging. A box switched off at the knob does not recharge, which is
+not what anyone expects from an object they put on its charger before going to
+bed.
 
-La carte portait déjà la réponse sans qu'on s'en serve : **`Q1`, grille sur
-`IO21`, tire `SYSOFF` à la masse en parallèle de l'interrupteur**. Le
-micrologiciel tient donc le verrou lui-même tant que l'USB est présent, et le
-relâche dès qu'il disparaît, sans quoi la boîte ne saurait plus s'éteindre du
-tout et viderait sa cellule.
+The board already carried the answer without anyone using it: **`Q1`, gate on
+`IO21`, pulls `SYSOFF` to ground in parallel with the switch**. The firmware
+therefore holds the latch itself while USB is present, and releases it as soon
+as it goes away, without which the box would no longer be able to turn off at
+all and would drain its cell.
 
-C'est la première utilisation du verrou d'extinction, posé au schéma dès le
-début et resté inerte jusqu'au 15 octobre 2026.
+This is the first use of the shutdown latch, drawn into the schematic from the
+start and left inert until 15 October 2026.
 
-### Le verrou sert aussi à dire au revoir
+### The latch is also how it says goodbye
 
-Sur batterie, le déclic de l'interrupteur coupe le courant immédiatement : la
-boîte n'a pas le temps de sonner, et jusqu'au 16 octobre elle mourait au milieu
-d'une phrase, sans rien dire. Le même verrou donne la fenêtre qui manquait.
+On battery, the switch's click cuts the power immediately: the box has no time
+to chime, and until 16 October it died mid-sentence, without saying anything.
+The same latch provides the window that was missing.
 
-Le micrologiciel **tient le verrou dès que la molette touche le bas**, avant le
-déclic, qui arrive quelques degrés plus loin. `SYSOFF` est alors déjà à la masse
-par `Q1` : l'interrupteur peut s'ouvrir, rien ne bouge. La boîte joue son
-carillon à l'envers, relâche le verrou, et c'est là que le courant tombe, si
-l'interrupteur est bien ouvert. Sinon la molette n'était qu'au minimum, et la
-boîte redémarre proprement.
+The firmware **holds the latch as soon as the knob touches the bottom**, before
+the click, which comes a few degrees further on. `SYSOFF` is already at ground
+through `Q1` by then: the switch can open, nothing moves. The box plays its
+chime in reverse, releases the latch, and that is where the power falls, if the
+switch really is open. Otherwise the knob was only at minimum, and the box
+restarts cleanly.
 
-La fenêtre est courte à dessein, une seconde et demie plus la durée du
-carillon. Un micrologiciel bloqué pendant qu'elle est ouverte garderait la
-batterie connectée alors que la molette est éteinte, et viderait la cellule en
-une nuit. Hors de cette fenêtre, le verrou est relâché et le matériel reste seul
-maître de l'alimentation, comme avant.
+The window is deliberately short, a second and a half plus the length of the
+chime. Firmware hung while it is open would keep the battery connected with the
+knob switched off, and would drain the cell overnight. Outside that window the
+latch is released and the hardware is sole master of the power again, as
+before.
 
-## Le chargeur chauffe, et c'est réglable
+## The charger runs hot, and that is adjustable
 
-Mesuré au doigt sur la carte, batterie à 3,65 V, USB branché : le BQ24075 est
-brûlant. Rien d'anormal, c'est un chargeur **linéaire**, qui dissipe la
-différence entre l'entrée et la cellule :
+Measured by finger on the board, battery at 3.65 V, USB plugged in: the BQ24075
+is burning hot. Nothing abnormal, it is a **linear** charger, which dissipates
+the difference between the input and the cell:
 
 ```
-(5,01 V − 3,65 V) × 0,89 A = 1,21 W
+(5.01 V − 3.65 V) × 0.89 A = 1.21 W
 ```
 
-Soit 60 à 70 °C en surface sur un boîtier de 3 × 3 mm. C'est le pire moment,
-l'écart étant maximal quand la batterie est basse ; à 4,2 V la dissipation tombe
-à 0,7 W. La puce se protège seule en réduisant son courant pour rester sous
-125 °C.
+That is 60 to 70 °C on the surface of a 3 × 3 mm package. It is the worst
+moment, the difference being greatest when the battery is low; at 4.2 V the
+dissipation falls to 0.7 W. The chip protects itself by reducing its current to
+stay under 125 °C.
 
-**Correction proposée : `R7` de 1 kΩ à 2 kΩ**, ce qui ramène le courant de charge
-de 890 mA à 445 mA. La chaleur est divisée par deux et la charge passe de trois
-à six heures. Pour un objet qu'on pose sur son chargeur le soir, six heures ne
-coûtent rien, et une puce tiède plutôt que brûlante dans un boîtier fermé, à
-côté d'une cellule lithium, dans une chambre d'enfant, les vaut largement.
+**Proposed fix: `R7` from 1 kΩ to 2 kΩ**, which brings the charge current down
+from 890 mA to 445 mA. The heat is halved and charging goes from three hours to
+six. For an object you put on its charger in the evening, six hours cost
+nothing, and a chip that is warm rather than burning hot, in a closed
+enclosure, next to a lithium cell, in a child's bedroom, is well worth them.
 
-À noter : avant que le micrologiciel ne tienne `SYSOFF` par `IO21`, la puce ne
-chauffait pas parce que la charge était simplement suspendue. La chaleur est la
-contrepartie du fait qu'elle se recharge enfin.
+Worth noting: before the firmware held `SYSOFF` through `IO21`, the chip did
+not get hot because charging was simply suspended. The heat is the price of it
+finally recharging.
