@@ -22,3 +22,26 @@ laiton chauffe, fond le plastique autour de lui et s'y noie. En refroidissant,
 on a un pas de vis metal pris dans la piece.
 
 Le modele a ete dessine sur Fusion 360 en licence loisir, qui est gratuite.
+
+## La prise USB-C de panneau
+
+`corps-prise-usb.scad` reprend le corps pour une prise USB-C femelle a
+encliqueter, celle qui evite d'ouvrir la boite pour la recharger. L'ouverture
+d'origine est un ovale de 9 x 3,5 mm taille pour laisser passer une fiche ; une
+prise de panneau demande une decoupe cotee et une epaisseur de paroi precise,
+celle que sa gorge vient pincer.
+
+Le script comble la poche d'origine, ramenee a 1 mm, porte la paroi a
+l'epaisseur voulue sur toute la surface du collet, et y perce la decoupe du
+fabricant, 13,6 x 6,3 mm a coins R1,3.
+
+```sh
+openscad --export-format binstl -o marelleo-corps-usb.stl corps-prise-usb.scad
+openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-prise-usb.scad
+```
+
+`EPAISSEUR` est le seul chiffre a revoir : c'est la largeur de la gorge, a
+mesurer au pied a coulisse sur la prise recue. Le gabarit est une tranche de
+34 x 18 mm prise autour de la decoupe, meme epaisseur et meme sens
+d'impression : dix minutes de PLA pour savoir si la gorge prend, au lieu de dix
+heures de boitier.
