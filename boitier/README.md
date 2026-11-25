@@ -24,24 +24,40 @@ have a metal thread captured in the part.
 
 The model was drawn in Fusion 360 on the free hobbyist licence.
 
-## The panel-mount USB-C socket
+## The reworks
 
-`corps-prise-usb.scad` reworks the body for a snap-in USB-C female socket, the
-one that saves opening the box to charge it. The original opening is a 9 x
-3.5 mm oval sized to let a plug through; a panel socket needs a dimensioned
-cutout and a precise wall thickness, the one its groove clamps onto.
-
-The script fills the original pocket, which was down to 1 mm, brings the wall
-to the wanted thickness across the whole bezel area, and cuts the
-manufacturer's aperture, 13.6 x 6.3 mm with R1.3 corners.
+Two OpenSCAD scripts rework the printed parts from the STLs, without going
+back to Fusion. Every dimension they use was measured in the mesh, not
+remembered.
 
 ```sh
-openscad --export-format binstl -o marelleo-corps-usb.stl corps-prise-usb.scad
-openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-prise-usb.scad
+openscad --export-format binstl -o marelleo-corps-v2.stl corps-reprise.scad
+openscad --export-format binstl -o marelleo-base-v2.stl  base-reprise.scad
+openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-reprise.scad
 ```
 
-`EPAISSEUR` is the only number to revisit: it is the groove width, to be
-measured with callipers on the socket you receive. The test coupon is a 34 x
-18 mm slice taken around the cutout, same thickness and same print
-orientation: ten minutes of PLA to find out whether the groove grips, instead
-of ten hours of enclosure.
+**`base-reprise.scad`: the four raft holes.** They were 0.95 mm across, for
+M2.5 inserts 3.5 mm in outer diameter. The insert had to displace almost all
+the material it met, and that material came back up into the thread. Now
+drilled at 3.2 mm, original depth kept, 6.5 mm for a 5 mm insert: the last
+millimetre and a half is where the displaced material goes.
+
+**`corps-reprise.scad`: the USB-C socket and the NFC reader's pads.**
+
+The original USB opening is a 9 x 3.5 mm oval sized to let a plug through. A
+panel socket needs a dimensioned cutout, 13.6 x 6.3 with R1.3 corners, and a
+precise wall thickness, the one its groove clamps. Around the old opening the
+wall had been hollowed to 1 mm, elsewhere it is 4 mm: the script fills the
+pocket, brings the whole bezel area to `EPAISSEUR`, and cuts the aperture.
+
+The NFC reader's two pads, 12 x 12 x 3 mm, were solid: no pilot hole, hence
+material going everywhere when an insert is melted in, and 3 mm of grip for an
+insert 5 mm long. They are now bored at 3.2 mm, and made taller only if the
+chosen insert requires it. `INSERT_L` defaults to 3, which leaves the module
+exactly where it is: longer pads push the antenna away from the figurine, and
+read range pays for it.
+
+`EPAISSEUR` and `INSERT_L` are the two numbers to revisit for the parts you
+have. The test coupon is a 34 x 18 mm slice taken around the cutout, same
+thickness and same print orientation: ten minutes of PLA to find out whether
+the groove grips, instead of ten hours of enclosure.

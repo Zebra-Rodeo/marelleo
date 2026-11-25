@@ -1,4 +1,4 @@
-// Le corps, repris pour une prise USB-C femelle a encliqueter.
+// Le corps, repris : la prise USB-C de panneau, et les plots du lecteur NFC.
 //
 // L'ouverture d'origine est un ovale de 9 x 3,5 mm, taille pour laisser passer
 // une fiche. Une prise de panneau demande autre chose : une decoupe cotee par
@@ -58,6 +58,7 @@ module corps_repris() {
         cube([POCHE_X[1] - POCHE_X[0], EPAISSEUR, POCHE_Z[1] - POCHE_Z[0]]);
       translate([CX - PANNEAU_L / 2, Y_EXT - EPAISSEUR, CZ - PANNEAU_H / 2])
         cube([PANNEAU_L, EPAISSEUR, PANNEAU_H]);
+      plots_nfc();     // allonges si l'insert choisi est plus long que 3 mm
     }
 
     // Degager l'interieur pour que la paroi fasse exactement EPAISSEUR sur toute
@@ -69,6 +70,8 @@ module corps_repris() {
     // La decoupe, traversante.
     translate([CX, Y_EXT - 20, CZ])
       prisme_arrondi(DECOUPE_L + JEU, DECOUPE_H + JEU, DECOUPE_R, 25);
+
+    percages_nfc();
   }
 }
 
@@ -78,6 +81,43 @@ module corps_repris() {
 //
 //   openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-prise-usb.scad
 GABARIT = false;
+
+// --- les plots du lecteur NFC
+//
+// Releves dans le maillage : deux paves de 12 x 12 mm qui pendent du plafond,
+// hauts de 3 mm, et **pleins**. Aucun avant-trou, d'ou la matiere qui part
+// partout quand on y fond un insert, et 3 mm de prise pour un insert qui en
+// fait 5.
+//
+// On perce donc, et on allonge le plot juste ce qu'il faut pour que l'insert
+// tienne entier dedans. Attention : allonger le plot descend le module
+// d'autant, donc eloigne l'antenne de la figurine. Avec INSERT_L = 3 on garde
+// la geometrie d'aujourd'hui, celle dont on sait qu'elle lit a travers les
+// 4 mm du plafond. Avec 5, le module descend de 3,5 mm et il faut verifier la
+// portee avant de refermer.
+INSERT_L  = 3;                       // longueur de l'insert choisi
+INSERT_D  = 3.5;                     // diametre exterieur
+PERCAGE_D = INSERT_D - 0.3;          // un peu plus petit : le laiton s'y ancre
+
+PLOTS_NFC = [[197, 48], [223, 72]];  // centres releves dans le maillage
+PLOT_Z    = 73;                      // dessous des plots d'origine
+PLAFOND_Z = 76;                      // dessous du plafond
+PERCAGE_P = INSERT_L + 1;            // la reserve recoit la matiere repoussee
+// Le percage a le droit de mordre 1,5 mm dans le plafond, qui en fait 4 : au
+// dela on allonge le plot plutot que d'amincir la zone ou la figurine se pose.
+PLOT_H    = max(3, PERCAGE_P - 1.5);
+
+module plots_nfc() {
+  for (p = PLOTS_NFC)
+    translate([p[0] - 6, p[1] - 6, PLAFOND_Z - PLOT_H])
+      cube([12, 12, PLOT_H]);
+}
+
+module percages_nfc() {
+  for (p = PLOTS_NFC)
+    translate([p[0], p[1], PLAFOND_Z - PLOT_H - 0.1])
+      cylinder(h = PERCAGE_P + 0.1, d = PERCAGE_D, $fn = 48);
+}
 
 if (GABARIT)
   intersection() {
