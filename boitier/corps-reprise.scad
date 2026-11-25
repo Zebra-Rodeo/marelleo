@@ -75,12 +75,16 @@ module corps_repris() {
   }
 }
 
-// Le gabarit est une tranche du corps repris, prise autour de la decoupe : meme
-// epaisseur, meme congés, meme sens d'impression. Dix minutes de PLA pour
-// savoir si la gorge prend, au lieu de dix heures de boitier.
+// Les gabarits sont des tranches du corps repris : meme epaisseur, memes cotes,
+// meme sens d'impression. Dix minutes de PLA pour verifier une piece avant d'en
+// lancer dix heures.
 //
-//   openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-prise-usb.scad
-GABARIT = false;
+//   openscad -D GABARIT=\"usb\" --export-format binstl -o gabarit-usb.stl corps-reprise.scad
+//   openscad -D GABARIT=\"nfc\" --export-format binstl -o gabarit-nfc.stl corps-reprise.scad
+//
+// Celui du NFC porte les deux plots a leur entraxe exact : on y presente le
+// module, et on sait si les trous tombent en face avant d'imprimer le boitier.
+GABARIT = "";
 
 // --- les plots du lecteur NFC
 //
@@ -119,10 +123,20 @@ module percages_nfc() {
       cylinder(h = PERCAGE_P + 0.1, d = PERCAGE_D, $fn = 48);
 }
 
-if (GABARIT)
+if (GABARIT == "usb")
   intersection() {
     corps_repris();
     translate([CX - 17, Y_EXT - 7, CZ - 11]) cube([34, 8, 22]);
   }
+else if (GABARIT == "nfc")
+  // Pose a plat, comme s'imprime le corps : la tranche de plafond sur le
+  // plateau, les plots vers le haut. On reflechit en Z plutot que de tourner,
+  // pour ne pas inverser la diagonale des deux plots.
+  translate([0, 0, PLAFOND_Z + 2]) mirror([0, 0, 1])
+    intersection() {
+      corps_repris();
+      translate([PLOTS_NFC[0][0] - 20, PLOTS_NFC[0][1] - 20, PLAFOND_Z - PLOT_H])
+        cube([66, 64, 2 + PLOT_H]);
+    }
 else
   corps_repris();

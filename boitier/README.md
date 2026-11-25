@@ -33,7 +33,8 @@ remembered.
 ```sh
 openscad --export-format binstl -o marelleo-corps-v2.stl corps-reprise.scad
 openscad --export-format binstl -o marelleo-base-v2.stl  base-reprise.scad
-openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-reprise.scad
+openscad -D GABARIT="usb" --export-format binstl -o gabarit-usb.stl corps-reprise.scad
+openscad -D GABARIT="nfc" --export-format binstl -o gabarit-nfc.stl corps-reprise.scad
 ```
 
 **`base-reprise.scad`: the four raft holes.** They were 0.95 mm across, for
@@ -61,3 +62,8 @@ read range pays for it.
 have. The test coupon is a 34 x 18 mm slice taken around the cutout, same
 thickness and same print orientation: ten minutes of PLA to find out whether
 the groove grips, instead of ten hours of enclosure.
+
+The `nfc` coupon carries the two pads at their exact spacing, 26 x 24 mm. You
+offer the module up to it before printing the enclosure: if the holes do not
+line up, this PN532 clone does not share the drilling of the one the pads were
+drawn for, and they need moving before rather than after.

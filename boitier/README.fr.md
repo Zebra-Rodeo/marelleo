@@ -32,7 +32,8 @@ maillage, pas retrouvees de memoire.
 ```sh
 openscad --export-format binstl -o marelleo-corps-v2.stl corps-reprise.scad
 openscad --export-format binstl -o marelleo-base-v2.stl  base-reprise.scad
-openscad -D GABARIT=true --export-format binstl -o gabarit.stl corps-reprise.scad
+openscad -D GABARIT="usb" --export-format binstl -o gabarit-usb.stl corps-reprise.scad
+openscad -D GABARIT="nfc" --export-format binstl -o gabarit-nfc.stl corps-reprise.scad
 ```
 
 **`base-reprise.scad` : les quatre trous du raft.** Ils faisaient 0,95 mm pour
@@ -61,3 +62,8 @@ l'antenne de la figurine, et c'est la portee du lecteur qui paie.
 tu as. Le gabarit est une tranche de 34 x 18 mm prise autour de la decoupe,
 meme epaisseur et meme sens d'impression : dix minutes de PLA pour savoir si
 la gorge prend, au lieu de dix heures de boitier.
+
+Le gabarit `nfc` porte les deux plots a leur entraxe exact, 26 x 24 mm. On y
+presente le module avant d'imprimer le boitier : s'il ne tombe pas en face,
+c'est que ce clone de PN532 n'a pas le meme percage que celui pour lequel les
+plots ont ete dessines, et il faut les deplacer avant et non apres.
